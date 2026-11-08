@@ -1,0 +1,82 @@
+/* ============================================================
+   TEMA — Chilly Cineforum
+   Tutti i colori, i font e le misure base stanno qui.
+   Ispirati all'immagine del gruppo: cielo azzurro, nuvole,
+   scritta bianca con contorno blu, giallo dell'emoji 😎.
+   ============================================================ */
+
+:root {
+  /* Font */
+  --font-display: 'Baloo 2', 'Nunito', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Forme */
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 24px;
+  --radius-pill: 999px;
+
+  /* Layout */
+  --gutter: 16px;
+  --topbar-h: 60px;
+  --nav-h: 68px;
+  --rail-w: 220px;
+  --max-w: 1100px;
+}
+
+/* ---------- Tema chiaro: "cielo di giorno" ---------- */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --sky-top: #c9dcff;
+  --sky: #eaf2ff;
+  --cloud: #ffffff;
+  --cloud-2: #f3f7ff;
+  --line: #d6e1fb;
+  --ink: #14245c;
+  --ink-soft: #4a5a8c;
+  --ink-faint: #8593bd;
+  --royal: #2b4fd8;
+  --royal-ink: #ffffff;
+  --royal-soft: #dce5ff;
+  --sun: #ffc93c;
+  --sun-deep: #e8a400;
+  --sun-ink: #3d2a00;
+  --tomato: #e5482f;
+  --leaf: #2f9e5b;
+  --logo-fill: #ffffff;
+  --logo-stroke: #1f3bb3;
+  --shadow: 0 6px 20px -8px rgba(31, 59, 179, 0.28);
+  --shadow-lift: 0 14px 30px -12px rgba(31, 59, 179, 0.4);
+  --scrim: rgba(20, 36, 92, 0.45);
+  --poster-ph-a: #8fb0ff;
+  --poster-ph-b: #2b4fd8;
+}
+
+/* ---------- Tema scuro: "cielo di notte" ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --sky-top: #1a2659;
+  --sky: #0c1433;
+  --cloud: #16214d;
+  --cloud-2: #1d2a5e;
+  --line: #2a3a78;
+  --ink: #e9eeff;
+  --ink-soft: #b3c0ec;
+  --ink-faint: #7787bd;
+  --royal: #8ea7ff;
+  --royal-ink: #0c1433;
+  --royal-soft: #26367a;
+  --sun: #ffd45c;
+  --sun-deep: #ffc21a;
+  --sun-ink: #3d2a00;
+  --tomato: #ff7a63;
+  --leaf: #5fd38d;
+  --logo-fill: #ffffff;
+  --logo-stroke: #3a5cf0;
+  --shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 14px 30px -12px rgba(0, 0, 0, 0.75);
+  --scrim: rgba(3, 7, 22, 0.65);
+  --poster-ph-a: #3a5cf0;
+  --poster-ph-b: #16214d;
+}

@@ -1,0 +1,5 @@
+# Solo per sviluppo locale (non viene mai pubblicato)
+DEV_USER_EMAIL=buizomanuel@gmail.com
+# Metti qui la tua chiave TMDB per provare la ricerca reale, oppure lascia MOCK_TMDB=1
+TMDB_API_KEY=
+MOCK_TMDB=1

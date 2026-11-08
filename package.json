@@ -1,0 +1,19 @@
+{
+  "name": "chillyforum",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply chillyforum-db --local",
+    "db:seed:local": "wrangler d1 execute chillyforum-db --local --file=seed/dev.sql",
+    "db:migrate": "wrangler d1 migrations apply chillyforum-db --remote",
+    "deploy": "wrangler deploy"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^4.158.0"
+  },
+  "private": true,
+  "type": "module"
+}
