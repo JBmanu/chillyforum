@@ -67,7 +67,7 @@ export const avatar = (p, cls = '') => {
   const id = p.person_id ?? p.reactor_id ?? p.id;
   const v = p.reactor_av ?? p.avatar_v;
   const photo = v && id ? `<img src="/api/people/${id}/avatar?v=${v}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : '';
-  return `<span class="avatar ${cls}" style="background:${AVATAR_COLORS[hash(p.email || p.name || p.reactor_email) % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initials(p.name ?? p.reactor_name))}${photo}</span>`;
+  return `<span class="avatar ${cls}"${photo ? ` data-photo="/api/people/${id}/avatar?v=${v}" data-who="${esc(p.name ?? p.reactor_name)}"` : ''} style="background:${AVATAR_COLORS[hash(p.email || p.name || p.reactor_email) % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initials(p.name ?? p.reactor_name))}${photo}</span>`;
 };
 
 export function poster(m, extra = '') {
@@ -120,3 +120,15 @@ export function confirmSheet({ title, text, ok = 'Conferma', danger = false }) {
 
 export const skeletonGrid = (n = 6) =>
   `<div class="grid">${Array.from({ length: n }, () => '<div class="card"><div class="poster skeleton"></div><div class="skeleton" style="height:16px;width:80%"></div></div>').join('')}</div>`;
+
+/** Anteprima grande della foto profilo (si chiude toccando o con Esc). */
+export function photoPreview(src, who = '') {
+  const d = document.createElement('dialog');
+  d.className = 'photo-preview';
+  d.setAttribute('aria-label', `Foto di ${who}`);
+  d.innerHTML = `<img src="${esc(src)}" alt="Foto di ${esc(who)}"><p>${esc(who)}</p>`;
+  document.body.append(d);
+  d.addEventListener('click', () => d.close());
+  d.addEventListener('close', () => d.remove());
+  d.showModal();
+}

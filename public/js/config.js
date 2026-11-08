@@ -31,10 +31,20 @@ export const RATING = {
 };
 
 /** Emoji disponibili come reazione ai voti degli altri. */
-export const REACTIONS = ['👍', '😂', '🔥', '😍', '🤔', '😱', '🙄', '👎'];
+export const REACTION_GROUPS = [
+  { label: 'Facce', list: ['😂', '🤣', '😍', '🥰', '😎', '🤩', '😱', '🥹', '😭', '😴', '🤔', '🙄', '😬', '🤮', '😡', '🥱'] },
+  { label: 'Gesti', list: ['👍', '👎', '👏', '🙌', '🙏', '💪', '🤝', '🤌', '🫶', '❤️', '💔', '💯'] },
+  { label: 'Cinema e altro', list: ['🔥', '🍿', '🎬', '🎭', '⭐', '🏆', '🍅', '💩', '👻', '💀', '🎉', '✨'] },
+];
+export const REACTIONS = REACTION_GROUPS.flatMap((g) => g.list);
+/** Le 5 mostrate finché non hai usato nulla. */
+export const REACTIONS_DEFAULT = ['👍', '😂', '🔥', '😍', '🤔'];
 
 /** Lunghezza massima della nota al voto. */
 export const NOTE_MAX = 280;
+
+/** Lunghezza massima di un messaggio nella discussione. */
+export const COMMENT_MAX = 500;
 
 /**
  * Generi. `tmdb` = id del genere su TMDB (per l'import automatico).

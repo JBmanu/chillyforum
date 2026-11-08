@@ -2,7 +2,7 @@
 import { APP } from './config.js';
 import { api, ApiError } from './api.js';
 import { icon } from './icons.js';
-import { prefs, applyTheme, esc } from './ui.js';
+import { prefs, applyTheme, esc, photoPreview } from './ui.js';
 import * as films from './views/films.js';
 import * as movie from './views/movie.js';
 import * as add from './views/add.js';
@@ -11,10 +11,12 @@ import * as people from './views/people.js';
 import * as person from './views/person.js';
 import * as profile from './views/profile.js';
 import * as watchlist from './views/watchlist.js';
+import * as discussion from './views/discussion.js';
 
 const ROUTES = [
   { re: /^\/?$/, view: films, nav: 'film', title: 'Film' },
   { re: /^\/film\/(\d+)$/, view: movie, nav: 'film', title: 'Film', keys: ['id'] },
+  { re: /^\/film\/(\d+)\/discussione$/, view: discussion, nav: 'film', title: 'Discussione', keys: ['id'] },
   { re: /^\/aggiungi$/, view: add, nav: 'film', title: 'Aggiungi film' },
   { re: /^\/aggiungi\/(da-vedere)$/, view: add, nav: 'davedere', title: 'Proponi un film', keys: ['mode'] },
   { re: /^\/da-vedere$/, view: watchlist, nav: 'davedere', title: 'Da vedere' },
@@ -117,6 +119,8 @@ async function boot() {
   });
   window.addEventListener('popstate', () => { if (history.state?.idx != null) idx = history.state.idx; });
   document.addEventListener('click', (e) => {
+    const ph = e.target.closest('.avatar[data-photo]');
+    if (ph && !ph.closest('a, button')) return photoPreview(ph.dataset.photo, ph.dataset.who);
     const a = e.target.closest('a.back');
     if (a && idx > 0 && !e.metaKey && !e.ctrlKey) { e.preventDefault(); history.back(); }
   });

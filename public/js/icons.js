@@ -9,6 +9,7 @@ export const icon = {
   user: s('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
   search: s('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
   plus: s('<path d="M12 5v14M5 12h14"/>'),
+  send: s('<path d="M5 12 20 4l-4 16-4-7-7-1Z"/>'),
   back: s('<path d="M15 5 8 12l7 7"/>'),
   close: s('<path d="M6 6l12 12M18 6 6 18"/>'),
   edit: s('<path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>'),

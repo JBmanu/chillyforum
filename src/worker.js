@@ -5,7 +5,7 @@
  */
 import { getCurrentUser } from './auth.js';
 import { searchMovies, movieDetails, tmdbEnabled } from './tmdb.js';
-import { GENRE_BY_ID, REACTIONS, NOTE_MAX, RATING } from '../public/js/config.js';
+import { GENRE_BY_ID, REACTIONS, NOTE_MAX, RATING, COMMENT_MAX } from '../public/js/config.js';
 
 class HttpError extends Error {
   constructor(status, message, code) { super(message); this.status = status; this.code = code; }
@@ -64,7 +64,11 @@ async function listMovies(env, me) {
 
 async function getMovie(env, id, me) {
   const movie = await env.DB.prepare(`
-    SELECT m.*, p.name AS added_by_name FROM movies m
+    SELECT m.*, p.name AS added_by_name,
+      (SELECT COUNT(*) FROM comments c WHERE c.movie_id = m.id) AS comments_count,
+      (SELECT c.body FROM comments c WHERE c.movie_id = m.id ORDER BY c.id DESC LIMIT 1) AS last_comment_body,
+      (SELECT q.name FROM comments c JOIN people q ON q.id = c.person_id WHERE c.movie_id = m.id ORDER BY c.id DESC LIMIT 1) AS last_comment_name
+    FROM movies m
     LEFT JOIN people p ON p.id = m.added_by WHERE m.id = ?`).bind(id).first();
   if (!movie) fail(404, 'Film non trovato');
   const [genres, votes, reactions, interests] = await env.DB.batch([
@@ -132,7 +136,7 @@ route('PATCH', '/api/me', async ({ me, env, request }) => {
 });
 
 /* Foto profilo: il client la ridimensiona (JPEG quadrato ~192 px), qui si controlla e si salva */
-const AVATAR_MAX = 60000; // caratteri base64, circa 45 KB
+const AVATAR_MAX = 100000; // caratteri base64, circa 75 KB
 route('PUT', '/api/me/avatar', async ({ me, env, request }) => {
   const b = await body(request);
   const m = typeof b.image === 'string' && b.image.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/);
@@ -337,6 +341,36 @@ route('GET', '/api/tmdb/search', async ({ env, url }) => {
 route('GET', '/api/tmdb/movie/:id', async ({ env, params }) => {
   if (!tmdbEnabled(env)) fail(501, 'Ricerca automatica non configurata');
   return json(await movieDetails(env, Number(params.id)));
+});
+
+/* Discussione per film: gli ultimi 200 messaggi (la pagina li richiede di nuovo ogni pochi secondi) */
+route('GET', '/api/movies/:id/comments', async ({ env, params }) => {
+  const id = Number(params.id);
+  const { results } = await env.DB.prepare(`
+    SELECT * FROM (
+      SELECT c.id, c.person_id, c.body, c.created_at, p.name, p.email, p.avatar_v
+      FROM comments c JOIN people p ON p.id = c.person_id WHERE c.movie_id = ? ORDER BY c.id DESC LIMIT 200
+    ) ORDER BY id`).bind(id).all();
+  return json(results);
+});
+
+route('POST', '/api/movies/:id/comments', async ({ env, me, params, request }) => {
+  const id = Number(params.id);
+  const text = cleanStr((await body(request)).body, COMMENT_MAX);
+  if (!text) fail(400, 'Scrivi qualcosa');
+  const movie = await env.DB.prepare('SELECT id FROM movies WHERE id = ?').bind(id).first();
+  if (!movie) fail(404, 'Film non trovato');
+  const row = await env.DB.prepare('INSERT INTO comments (movie_id, person_id, body) VALUES (?, ?, ?) RETURNING id, created_at')
+    .bind(id, me.id, text).first();
+  return json({ ...row, person_id: me.id, body: text, name: me.name, email: me.email, avatar_v: me.avatar_v ?? null }, 201);
+});
+
+route('DELETE', '/api/comments/:id', async ({ env, me, params }) => {
+  const c = await env.DB.prepare('SELECT person_id FROM comments WHERE id = ?').bind(Number(params.id)).first();
+  if (!c) fail(404, 'Messaggio non trovato');
+  if (c.person_id !== me.id && !me.is_admin) fail(403, 'Puoi cancellare solo i tuoi messaggi');
+  await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(Number(params.id)).run();
+  return json({ ok: true });
 });
 
 /* ------------------------- Entry ------------------------- */

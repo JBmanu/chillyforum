@@ -1,5 +1,5 @@
 // Pagina del singolo film: info, voto medio, il tuo voto + nota, voti del gruppo con reazioni
-import { GENRE_BY_ID, REACTIONS, NOTE_MAX } from '../config.js';
+import { GENRE_BY_ID, REACTIONS, REACTION_GROUPS, REACTIONS_DEFAULT, NOTE_MAX } from '../config.js';
 import { emojiBlast } from '../fx.js';
 import { api } from '../api.js';
 import { icon } from '../icons.js';
@@ -27,6 +27,27 @@ function groupPanel(m) {
       ${distribution(m.votes)}
     </div>` : '<p class="muted">🍿 Ancora nessun voto: dai il primo qui sotto.</p>'}
   </section>`;
+}
+
+// Ultime emoji usate (solo su questo telefono)
+const recents = () => {
+  try { const r = JSON.parse(localStorage.getItem('chilly.recentReactions') || '[]').filter((e) => REACTIONS.includes(e)); return [...new Set([...r, ...REACTIONS_DEFAULT])].slice(0, 5); }
+  catch { return REACTIONS_DEFAULT; }
+};
+const rememberReaction = (emoji) => {
+  try { localStorage.setItem('chilly.recentReactions', JSON.stringify([emoji, ...recents().filter((e) => e !== emoji)].slice(0, 5))); } catch {}
+};
+const pickerHTML = (mine, all) => all
+  ? REACTION_GROUPS.map((g) => `<div class="picker-group"><span class="picker-label">${g.label}</span><div class="picker-row">${g.list.map((r) => `<button type="button" data-react="${r}" aria-pressed="${mine.has(r)}">${r}</button>`).join('')}</div></div>`).join('')
+  : `<div class="picker-row">${recents().map((r) => `<button type="button" data-react="${r}" aria-pressed="${mine.has(r)}">${r}</button>`).join('')}<button type="button" class="picker-more" data-more aria-label="Mostra tutte le emoji">＋</button></div>`;
+
+function discussionLink(m) {
+  const n = m.comments_count || 0;
+  return `<a class="panel disc-link" href="#/film/${m.id}/discussione">
+    <span class="disc-ico" aria-hidden="true">💬</span>
+    <span class="grow"><b>Discussione</b>${n ? ` <span class="faint">(${n})</span>` : ''}
+      <span class="meta">${n ? `${esc(m.last_comment_name)}: ${esc(m.last_comment_body)}` : 'Nessun messaggio: scrivi tu il primo'}</span></span>
+    <span aria-hidden="true">›</span></a>`;
 }
 
 function reactionsHTML(v, me) {
@@ -121,6 +142,7 @@ export async function render(main, { me, params }) {
       </div>
     </section>
     <div id="votes"></div>` : watchlistPanel(m)}
+    ${discussionLink(m)}
     ${m.overview ? `<section class="panel"><h2 style="margin-bottom:8px">Trama</h2>
       <p class="overview clamp" id="ov">${esc(m.overview)}</p>
       <button type="button" class="linkbtn" id="more" hidden>Leggi tutto</button></section>` : ''}
@@ -224,19 +246,30 @@ export async function render(main, { me, params }) {
       const mine = new Set((m.votes.find((x) => x.person_id === voter)?.reactions || []).filter((r) => r.reactor_id === me.id).map((r) => r.emoji));
       const p = document.createElement('div');
       p.className = 'picker'; p.setAttribute('role', 'group'); p.setAttribute('aria-label', 'Scegli una reazione');
-      p.innerHTML = REACTIONS.map((r) => `<button type="button" data-react="${r}" aria-pressed="${mine.has(r)}">${r}</button>`).join('');
+      p.innerHTML = pickerHTML(mine, false);
       li.append(p); // sta in sovrapposizione (position:absolute): non sposta nulla
       // sopra al pulsante; se non c'è spazio, sotto
-      const above = pickBtn.getBoundingClientRect().top > p.offsetHeight + 90;
-      if (above) p.style.bottom = `${li.clientHeight - pickBtn.offsetTop + 6}px`;
-      else { p.style.top = `${pickBtn.offsetTop + pickBtn.offsetHeight + 6}px`; p.classList.add('below'); }
+      const place = () => {
+        p.style.top = p.style.bottom = ''; p.classList.remove('below');
+        const above = pickBtn.getBoundingClientRect().top > p.offsetHeight + 90;
+        if (above) p.style.bottom = `${li.clientHeight - pickBtn.offsetTop + 6}px`;
+        else { p.style.top = `${pickBtn.offsetTop + pickBtn.offsetHeight + 6}px`; p.classList.add('below'); }
+      };
+      p._place = place; place();
       pickBtn.setAttribute('aria-expanded', 'true');
       p.querySelector('button').focus({ preventScroll: true });
       setTimeout(() => document.addEventListener('pointerdown', outside), 0);
       return;
     }
+    if (e.target.closest('[data-more]')) {
+      const p = li.querySelector('.picker');
+      const mine = new Set((m.votes.find((x) => x.person_id === voter)?.reactions || []).filter((r) => r.reactor_id === me.id).map((r) => r.emoji));
+      p.innerHTML = pickerHTML(mine, true); p.classList.add('all'); p._place();
+      p.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
     const r = e.target.closest('[data-react]');
-    if (r) { closePickers(); react(voter, r.dataset.react); }
+    if (r) { closePickers(); rememberReaction(r.dataset.react); react(voter, r.dataset.react); }
   });
   }
 
