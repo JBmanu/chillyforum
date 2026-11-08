@@ -1,37 +1,38 @@
 {
-  // ============================================================
-  //  Configurazione Cloudflare — Chillyforum
-  //  Dopo `npx wrangler d1 create chillyforum-db` incolla qui sotto il
-  //  database_id che ti restituisce.
-  // ============================================================
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "chillyforum",
-  "main": "src/worker.js",
-  "compatibility_date": "2026-10-01",
-  // Niente URL di anteprima: il sito resta raggiungibile solo dall'indirizzo protetto da Access
-  "preview_urls": false,
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": ["/api/*"]
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "chillyforum-db",
-      "database_id": "INCOLLA-QUI-IL-DATABASE-ID",
-      "migrations_dir": "migrations"
-    }
-  ],
-  "vars": {
-    // Email degli amministratori (separate da virgola): possono gestire le persone.
-    "ADMIN_EMAILS": "buizomanuel@gmail.com",
-    // Cloudflare Access: dominio del team, es. "chilly.cloudflareaccess.com"
-    "ACCESS_TEAM_DOMAIN": "",
-    // Cloudflare Access: "Application Audience (AUD) Tag" dell'applicazione
-    "ACCESS_AUD": "",
-    // Lingua dei dati dei film presi da TMDB
-    "TMDB_LANGUAGE": "it-IT"
-  }
-  // Segreto (non va qui): npx wrangler secret put TMDB_API_KEY
+	// ============================================================
+	//  Configurazione Cloudflare — Chillyforum
+	//  Il database_id arriva da `npx wrangler d1 create chillyforum-db`.
+	// ============================================================
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "chillyforum",
+	"main": "src/worker.js",
+	"compatibility_date": "2026-10-01",
+	// Niente URL di anteprima: il sito resta raggiungibile solo dall'indirizzo protetto da Access
+	"preview_urls": false,
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "chillyforum-db",
+			"database_id": "c865f609-9207-4f46-9929-d89d378910d6",
+			"migrations_dir": "migrations"
+		}
+	],
+	"vars": {
+		// Email degli amministratori (separate da virgola): possono gestire le persone.
+		"ADMIN_EMAILS": "buizomanuel@gmail.com",
+		// Cloudflare Access: dominio del team, es. "chilly.cloudflareaccess.com"
+		"ACCESS_TEAM_DOMAIN": "",
+		// Cloudflare Access: "Application Audience (AUD) Tag" dell'applicazione
+		"ACCESS_AUD": "",
+		// Lingua dei dati dei film presi da TMDB
+		"TMDB_LANGUAGE": "it-IT"
+	}
+	// Segreto (non va qui): npx wrangler secret put TMDB_API_KEY
 }
