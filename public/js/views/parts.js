@@ -162,10 +162,15 @@ export function mountRater(el, value, onCommit) {
   const end = () => {
     if (!dragging) return;
     dragging = false; track.classList.remove('dragging');
-    if (temp !== v) { v = temp; onCommit(v); celebrate(v); }
+    if (temp != null) {
+      const changed = temp !== v;
+      v = temp;
+      if (changed) onCommit(v);
+      celebrate(v); // anche se rimetti lo stesso voto
+    }
   };
   track.addEventListener('pointerup', end);
-  track.addEventListener('pointercancel', () => { dragging = false; track.classList.remove('dragging'); paint(v); });
+  track.addEventListener('pointercancel', end); // se il browser interrompe il gesto, il voto scelto conta lo stesso
 
   zero.addEventListener('click', () => { if (v !== 0) { v = 0; paint(v); onCommit(v); celebrate(0); } });
 

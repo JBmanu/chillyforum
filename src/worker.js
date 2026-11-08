@@ -69,17 +69,17 @@ async function getMovie(env, id, me) {
   if (!movie) fail(404, 'Film non trovato');
   const [genres, votes, reactions, interests] = await env.DB.batch([
     env.DB.prepare('SELECT genre FROM movie_genres WHERE movie_id = ?').bind(id),
-    env.DB.prepare(`SELECT v.person_id, v.value, v.note, v.updated_at, p.name, p.email
+    env.DB.prepare(`SELECT v.person_id, v.value, v.note, v.updated_at, p.name, p.email, p.avatar_v
       FROM votes v JOIN people p ON p.id = v.person_id WHERE v.movie_id = ? ORDER BY v.updated_at DESC`).bind(id),
-    env.DB.prepare(`SELECT r.voter_id, r.reactor_id, r.emoji, p.name AS reactor_name, p.email AS reactor_email
+    env.DB.prepare(`SELECT r.voter_id, r.reactor_id, r.emoji, p.name AS reactor_name, p.email AS reactor_email, p.avatar_v AS reactor_av
       FROM reactions r JOIN people p ON p.id = r.reactor_id WHERE r.movie_id = ? ORDER BY r.created_at`).bind(id),
-    env.DB.prepare(`SELECT p.id, p.name, p.email FROM interests i JOIN people p ON p.id = i.person_id
+    env.DB.prepare(`SELECT p.id, p.name, p.email, p.avatar_v FROM interests i JOIN people p ON p.id = i.person_id
       WHERE i.movie_id = ? ORDER BY i.created_at`).bind(id),
   ]);
   const list = votes.results.map((v) => ({
     ...v,
     reactions: reactions.results.filter((r) => r.voter_id === v.person_id)
-      .map(({ reactor_id, emoji, reactor_name, reactor_email }) => ({ reactor_id, emoji, reactor_name, reactor_email })),
+      .map(({ reactor_id, emoji, reactor_name, reactor_email, reactor_av }) => ({ reactor_id, emoji, reactor_name, reactor_email, reactor_av })),
   }));
   const avg = list.length ? list.reduce((s, v) => s + v.value, 0) / list.length : null;
   return {
@@ -129,6 +129,37 @@ route('PATCH', '/api/me', async ({ me, env, request }) => {
   if (!name) fail(400, 'Il nome non può essere vuoto');
   await env.DB.prepare('UPDATE people SET name = ? WHERE id = ?').bind(name, me.id).run();
   return json({ ...me, name });
+});
+
+/* Foto profilo: il client la ridimensiona (JPEG quadrato ~192 px), qui si controlla e si salva */
+const AVATAR_MAX = 60000; // caratteri base64, circa 45 KB
+route('PUT', '/api/me/avatar', async ({ me, env, request }) => {
+  const b = await body(request);
+  const m = typeof b.image === 'string' && b.image.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/);
+  if (!m || !m[1].startsWith('/9j/')) fail(400, 'Immagine non valida');
+  if (m[1].length > AVATAR_MAX) fail(413, 'Immagine troppo grande');
+  const v = Date.now();
+  await env.DB.batch([
+    env.DB.prepare('INSERT INTO avatars (person_id, data) VALUES (?, ?) ON CONFLICT(person_id) DO UPDATE SET data = excluded.data').bind(me.id, m[1]),
+    env.DB.prepare('UPDATE people SET avatar_v = ? WHERE id = ?').bind(v, me.id),
+  ]);
+  return json({ avatar_v: v });
+});
+
+route('DELETE', '/api/me/avatar', async ({ me, env }) => {
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM avatars WHERE person_id = ?').bind(me.id),
+    env.DB.prepare('UPDATE people SET avatar_v = NULL WHERE id = ?').bind(me.id),
+  ]);
+  return json({ avatar_v: null });
+});
+
+route('GET', '/api/people/:id/avatar', async ({ env, params }) => {
+  const row = await env.DB.prepare('SELECT data FROM avatars WHERE person_id = ?').bind(Number(params.id)).first();
+  if (!row) fail(404, 'Nessuna foto');
+  const bin = Uint8Array.from(atob(row.data), (c) => c.charCodeAt(0));
+  // L'indirizzo contiene ?v=versione: cambia quando cambia la foto, quindi si può tenere in cache a lungo
+  return new Response(bin, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=31536000, immutable' } });
 });
 
 route('GET', '/api/movies', async ({ env, me }) => json(await listMovies(env, me)));
@@ -238,7 +269,7 @@ route('POST', '/api/movies/:id/votes/:voter/reactions', async ({ env, me, params
 
 route('GET', '/api/people', async ({ env }) => {
   const { results } = await env.DB.prepare(`
-    SELECT p.id, p.name, p.email, p.is_admin, p.created_at,
+    SELECT p.id, p.name, p.email, p.is_admin, p.created_at, p.avatar_v,
       COUNT(v.movie_id) AS votes, ROUND(AVG(v.value), 2) AS avg_given
     FROM people p LEFT JOIN votes v ON v.person_id = p.id
     GROUP BY p.id ORDER BY lower(p.name)`).all();
@@ -247,7 +278,7 @@ route('GET', '/api/people', async ({ env }) => {
 
 route('GET', '/api/people/:id', async ({ env, params }) => {
   const id = Number(params.id);
-  const person = await env.DB.prepare('SELECT id, name, email, is_admin, created_at FROM people WHERE id = ?').bind(id).first();
+  const person = await env.DB.prepare('SELECT id, name, email, is_admin, created_at, avatar_v FROM people WHERE id = ?').bind(id).first();
   if (!person) fail(404, 'Persona non trovata');
   const { results } = await env.DB.prepare(`
     SELECT m.id, m.title, m.year, m.poster_url, v.value, v.note, v.updated_at,
@@ -290,7 +321,7 @@ route('DELETE', '/api/people/:id', async ({ env, me, params }) => {
 
 route('GET', '/api/activity', async ({ env }) => {
   const { results } = await env.DB.prepare(`
-    SELECT v.movie_id, v.person_id, v.value, v.note, v.updated_at, p.name, p.email, m.title
+    SELECT v.movie_id, v.person_id, v.value, v.note, v.updated_at, p.name, p.email, p.avatar_v, m.title
     FROM votes v JOIN people p ON p.id = v.person_id JOIN movies m ON m.id = v.movie_id
     ORDER BY v.updated_at DESC LIMIT 15`).all();
   return json(results);

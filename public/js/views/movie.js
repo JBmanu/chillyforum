@@ -1,5 +1,6 @@
 // Pagina del singolo film: info, voto medio, il tuo voto + nota, voti del gruppo con reazioni
 import { GENRE_BY_ID, REACTIONS, NOTE_MAX } from '../config.js';
+import { emojiBlast } from '../fx.js';
 import { api } from '../api.js';
 import { icon } from '../icons.js';
 import { esc, fmtAvg, fmtVote, fmtDate, poster, prefs, avatar, timeAgo, toast, sheet, confirmSheet, todayISO } from '../ui.js';
@@ -37,9 +38,9 @@ function reactionsHTML(v, me) {
     const names = rs.map((r) => r.reactor_name).join(', ');
     return `<button type="button" class="react" data-emoji="${emoji}" aria-pressed="${mine}" ${own ? 'disabled' : ''}
       aria-label="${emoji} da ${esc(names)}${own ? '' : mine ? '. Tocca per togliere la tua' : '. Tocca per aggiungere la tua'}" title="${esc(names)}">
-      <span>${emoji}</span><span class="faces">${rs.slice(0, 3).map((r) => avatar({ name: r.reactor_name, email: r.reactor_email })).join('')}</span>${rs.length > 3 ? `<b>+${rs.length - 3}</b>` : ''}</button>`;
+      <span>${emoji}</span><span class="faces">${rs.slice(0, 3).map((r) => avatar(r)).join('')}</span>${rs.length > 3 ? `<b>+${rs.length - 3}</b>` : ''}</button>`;
   }).join('');
-  const add = own ? '' : `<button type="button" class="react react-add" data-pick aria-expanded="false" aria-label="Aggiungi una reazione al voto di ${esc(v.name)}">${icon.smile}</button>`;
+  const add = own ? '' : `<button type="button" class="react react-add" data-pick aria-expanded="false" aria-label="Aggiungi una reazione al voto di ${esc(v.name)}">${icon.smile}<b class="plus" aria-hidden="true">+</b></button>`;
   return chips + add;
 }
 
@@ -196,7 +197,8 @@ export async function render(main, { me, params }) {
   const react = async (voter, emoji) => {
     const v = m.votes.find((x) => x.person_id === voter);
     const i = v.reactions.findIndex((r) => r.reactor_id === me.id && r.emoji === emoji);
-    if (i >= 0) v.reactions.splice(i, 1); else v.reactions.push({ reactor_id: me.id, emoji, reactor_name: me.name, reactor_email: me.email });
+    if (i >= 0) v.reactions.splice(i, 1);
+    else { v.reactions.push({ reactor_id: me.id, emoji, reactor_name: me.name, reactor_email: me.email, reactor_av: me.avatar_v }); emojiBlast(emoji); }
     $('#votes').innerHTML = votesPanel(m, me); // aggiornamento immediato
     try { m = await api.post(`/movies/${id}/votes/${voter}/reactions`, { emoji }); api.set(path, m); $('#votes').innerHTML = votesPanel(m, me); }
     catch (e) { toast(e.message, { error: true }); }

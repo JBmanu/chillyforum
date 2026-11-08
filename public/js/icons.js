@@ -13,7 +13,7 @@ export const icon = {
   close: s('<path d="M6 6l12 12M18 6 6 18"/>'),
   edit: s('<path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>'),
   trash: s('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
-  smile: s('<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/><path d="M19 3v4M17 5h4" stroke-width="1.8"/>'),
+  smile: s('<circle cx="12" cy="12" r="9"/><path d="M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>'),
   logout: s('<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/>'),
   bookmark: s('<path d="M6 3h12v18l-6-4.5L6 21V3Z"/><path d="M12 7v6M9 10h6"/>'),
   check: s('<path d="m5 12 5 5 9-10"/>'),

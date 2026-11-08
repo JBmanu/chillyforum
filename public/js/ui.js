@@ -62,8 +62,13 @@ export function timeAgo(iso) {
 /* ---------- Avatar e poster ---------- */
 function hash(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 export const initials = (name) => String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-export const avatar = (p, cls = '') =>
-  `<span class="avatar ${cls}" style="background:${AVATAR_COLORS[hash(p.email || p.name) % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initials(p.name))}</span>`;
+export const avatar = (p, cls = '') => {
+  // L'oggetto può essere una persona, un voto (person_id) o una reazione (reactor_id)
+  const id = p.person_id ?? p.reactor_id ?? p.id;
+  const v = p.reactor_av ?? p.avatar_v;
+  const photo = v && id ? `<img src="/api/people/${id}/avatar?v=${v}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : '';
+  return `<span class="avatar ${cls}" style="background:${AVATAR_COLORS[hash(p.email || p.name || p.reactor_email) % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initials(p.name ?? p.reactor_name))}${photo}</span>`;
+};
 
 export function poster(m, extra = '') {
   const img = m.poster_url

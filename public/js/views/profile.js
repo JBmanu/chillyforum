@@ -11,7 +11,12 @@ export async function render(main, { me, setMe }) {
   main.innerHTML = `
     <div class="page-head"><h1>Profilo</h1></div>
     <section class="panel" style="display:flex;gap:14px;align-items:center">
-      ${avatar(me, 'lg')}
+      <div class="avatar-edit">
+        <button type="button" class="avatar-btn" id="pickPhoto" aria-label="Cambia la tua foto">${avatar(me, 'lg')}</button>
+        <button type="button" class="linkbtn" id="photoBtn">${me.avatar_v ? 'Cambia foto' : 'Aggiungi foto'}</button>
+        ${me.avatar_v ? '<button type="button" class="linkbtn" id="photoDel">Togli foto</button>' : ''}
+        <input type="file" id="photoFile" accept="image/*" hidden>
+      </div>
       <form id="nameForm" class="grow" style="flex:1;min-width:0;display:grid;gap:6px">
         <label class="field"><span>Il tuo nome</span>
           <input class="input" name="name" value="${esc(me.name)}" maxlength="60" autocomplete="nickname" enterkeyhint="done"></label>
@@ -29,6 +34,28 @@ export async function render(main, { me, setMe }) {
     </section>
     <a class="btn btn-ghost btn-block" style="margin-top:20px" href="/cdn-cgi/access/logout">${icon.logout}Esci</a>
     <p class="faint" style="text-align:center;margin-top:16px">${esc(APP.fullName)} 😎<br>Dati dei film da <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. Questo prodotto usa l'API di TMDB ma non è approvato né certificato da TMDB.</p>`;
+
+  // Foto profilo: ritagliata quadrata, ridotta a 192 px e salvata come JPEG (~10 KB)
+  const resize = async (file) => {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const side = Math.min(bmp.width, bmp.height), SIZE = 192;
+    const c = document.createElement('canvas'); c.width = c.height = SIZE;
+    c.getContext('2d').drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, SIZE, SIZE);
+    return c.toDataURL('image/jpeg', 0.82);
+  };
+  const photoDone = (v) => { setMe({ avatar_v: v }); me.avatar_v = v; api.invalidate('/people', '/movies', '/activity'); render(main, { me, setMe }); };
+  const fileIn = main.querySelector('#photoFile');
+  main.querySelectorAll('#pickPhoto, #photoBtn').forEach((b) => b.addEventListener('click', () => fileIn.click()));
+  fileIn.addEventListener('change', async () => {
+    const f = fileIn.files[0]; if (!f) return;
+    try {
+      const r = await api.put('/me/avatar', { image: await resize(f) });
+      toast('Foto aggiornata'); photoDone(r.avatar_v);
+    } catch (e) { toast(e.message || 'Non riesco a leggere questa immagine', { error: true }); }
+  });
+  main.querySelector('#photoDel')?.addEventListener('click', async () => {
+    try { await api.del('/me/avatar'); toast('Foto tolta'); photoDone(null); } catch (e) { toast(e.message, { error: true }); }
+  });
 
   const form = main.querySelector('#nameForm');
   const saveName = async () => {
