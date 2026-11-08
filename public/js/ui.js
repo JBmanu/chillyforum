@@ -1,5 +1,5 @@
 // Utility di interfaccia condivise da tutte le pagine
-import { AVATAR_COLORS, STORAGE_KEYS, RATING, APP } from './config.js';
+import { AVATAR_COLORS, STORAGE_KEYS, RATING, APP, LIST_LIMITS } from './config.js';
 import { icon, star } from './icons.js';
 
 /* ---------- Preferenze del dispositivo ---------- */
@@ -14,6 +14,28 @@ export const prefs = {
   get sort() { return read(STORAGE_KEYS.sort, 'recent'); },
   set sort(v) { write(STORAGE_KEYS.sort, v); },
 };
+
+/* ---------- Liste con anteprima ----------
+   Si parte da poche righe (5) e un filtro "Mostra 5 · 10 · Tutti" permette di vedere di più.
+   La scelta si ricorda per ogni lista (classifica, ultimi voti). */
+const limitKey = (list) => `chilly.limit.${list}`;
+export const getLimit = (list) => {
+  const v = Number(read(limitKey(list), LIST_LIMITS.first));
+  return LIST_LIMITS.options.includes(v) ? v : LIST_LIMITS.first;
+};
+export const capped = (rows, list) => { const n = getLimit(list); return n ? rows.slice(0, n) : rows; };
+export function limitBar(list, total) {
+  if (total <= LIST_LIMITS.first) return '';
+  const cur = getLimit(list), shown = cur ? Math.min(cur, total) : total;
+  const opts = LIST_LIMITS.options.filter((n) => n === 0 || n < total);
+  return `<div class="limitbar"><span class="faint" aria-live="polite">${shown} di ${total}</span>
+    <div class="chips" role="group" aria-label="Quante righe mostrare"><span class="faint">Mostra</span>
+      ${opts.map((n) => `<button type="button" class="chip" data-limit="${n}" aria-pressed="${(cur === 0 || cur >= total ? 0 : cur) === n}">${n || 'Tutti'}</button>`).join('')}
+    </div></div>`;
+}
+export function bindLimitBar(root, list, onChange) {
+  root.querySelectorAll('[data-limit]').forEach((b) => b.addEventListener('click', () => { write(limitKey(list), b.dataset.limit); onChange(); }));
+}
 
 const darkMq = matchMedia('(prefers-color-scheme: dark)');
 export function applyTheme() {

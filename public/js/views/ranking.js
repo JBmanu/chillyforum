@@ -1,7 +1,7 @@
 // Pagina "Classifica": migliori, peggiori, più divisivi, filtrabili per genere
 import { GENRE_BY_ID } from '../config.js';
 import { api } from '../api.js';
-import { esc, fmtAvg, prefs, stars, thumb } from '../ui.js';
+import { esc, fmtAvg, prefs, stars, thumb, capped, limitBar, bindLimitBar } from '../ui.js';
 
 const state = { mode: 'best', genre: 'all' };
 const ORDER = ['best', 'worst', 'split', 'genre'];
@@ -32,7 +32,7 @@ export async function render(main) {
       const n = fs.reduce((s, m) => s + m.votes, 0);
       return { g, films: fs.length, votes: n, avg: fs.reduce((s, m) => s + m.avg * m.votes, 0) / n };
     }).sort((a, b) => b.avg - a.avg || b.films - a.films);
-    const genreList = `<ol class="list">${genreRows.map((r, i) => `<li><button type="button" class="list-item genre-row" data-pickgenre="${r.g}">
+    const genreList = `<ol class="list">${capped(genreRows, 'ranking').map((r, i) => `<li><button type="button" class="list-item genre-row" data-pickgenre="${r.g}">
         <span class="rank ${i < 3 ? 'top' : ''}">${i + 1}</span>
         <span class="taste-emoji" aria-hidden="true">${GENRE_BY_ID[r.g].emoji}</span>
         <span class="grow"><span class="name">${esc(GENRE_BY_ID[r.g].label)}</span>
@@ -51,6 +51,7 @@ export async function render(main) {
         <button class="chip" type="button" data-g="all" aria-pressed="${state.genre === 'all'}">Tutti i generi</button>
         ${genres.map((g) => `<button class="chip" type="button" data-g="${g}" aria-pressed="${state.genre === g}">${GENRE_BY_ID[g].emoji} ${GENRE_BY_ID[g].label}</button>`).join('')}
       </div>`}
+      ${limitBar('ranking', state.mode === 'genre' ? genreRows.length : rows.length)}
       <div class="panel ${slide}">
         ${state.mode === 'genre' ? (genreRows.length ? genreList : '<div class="empty"><div class="big">🎭</div><h2>Nessun genere ancora</h2><p class="muted">Votate qualche film per vedere i generi preferiti.</p></div>') : rows.length ? `<ol class="list">${rows.map((m, i) => `<li><a class="list-item" href="#/film/${m.id}">
             <span class="rank ${i < 3 ? 'top' : ''}">${i + 1}</span>${thumb(m)}
@@ -68,6 +69,7 @@ export async function render(main) {
       if (!d) return;
       state.mode = b.dataset.mode; slide = d > 0 ? 'slide-next' : 'slide-prev'; paint(movies); slide = '';
     }));
+    bindLimitBar(main, 'ranking', () => paint(movies));
     main.querySelectorAll('[data-pickgenre]').forEach((b) => b.addEventListener('click', () => {
       state.genre = b.dataset.pickgenre; state.mode = 'best'; slide = 'slide-prev'; paint(movies); slide = '';
     }));

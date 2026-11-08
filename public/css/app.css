@@ -504,3 +504,8 @@ img.fresh { animation: imgIn .25s ease-out; }
 .genre-row { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
 .genre-row .taste-emoji { width: 40px; font-size: 1.7rem; }
 .segmented button { padding-inline: 4px; font-size: .92rem; }
+
+/* Barra "Mostra 5 · 10 · Tutti" */
+.limitbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 4px 10px; }
+.limitbar .chips { display: flex; align-items: center; gap: 6px; }
+.panel .limitbar { margin: 0 0 8px; }

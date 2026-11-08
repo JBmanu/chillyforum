@@ -97,3 +97,6 @@ export const STORAGE_KEYS = {
   scale: 'chilly.scale', // 5 | 10
   sort: 'chilly.sort',
 };
+
+/** Liste lunghe (classifiche, ultimi voti): all'inizio se ne vedono 5, poi si sceglie 10 o tutte. 0 = tutte. */
+export const LIST_LIMITS = { first: 5, options: [5, 10, 0] };

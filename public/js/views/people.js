@@ -1,7 +1,7 @@
 // Pagina "Persone": attività recente, elenco del gruppo, aggiunta (solo admin)
 import { api } from '../api.js';
 import { icon } from '../icons.js';
-import { esc, avatar, fmtAvg, fmtVote, timeAgo, toast, sheet, prefs } from '../ui.js';
+import { esc, avatar, fmtAvg, fmtVote, timeAgo, toast, sheet, prefs, capped, limitBar, bindLimitBar } from '../ui.js';
 
 export function personForm(p = {}, { submitLabel, showAdmin }) {
   return `<form class="form" novalidate>
@@ -39,13 +39,15 @@ export async function render(main, { me }) {
       </section>
       <section class="panel" aria-labelledby="h-act">
         <div class="panel-head"><h2 id="h-act">Ultimi voti</h2></div>
-        ${activity.length ? `<ul class="list">${activity.map((a) => `<li><a class="list-item" href="#/film/${a.movie_id}">
+        ${limitBar('activity', activity.length)}
+        ${activity.length ? `<ul class="list">${capped(activity, 'activity').map((a) => `<li><a class="list-item" href="#/film/${a.movie_id}">
           ${avatar(a)}<span class="grow"><span class="name">${esc(a.person_id === me.id ? 'Tu' : a.name)} → ${esc(a.title)}</span>
           <span class="meta">${timeAgo(a.updated_at)}${a.note ? `: “${esc(a.note)}”` : ''}</span></span>
           <span class="logo-type" style="font-size:1.5rem">${fmtVote(a.value)}</span></a></li>`).join('')}</ul>`
         : '<p class="muted">Ancora nessun voto.</p>'}
       </section>`;
 
+    bindLimitBar(main, 'activity', () => paint(people, activity));
     main.querySelector('#addP')?.addEventListener('click', () => {
       sheet('Aggiungi persona', personForm({}, { submitLabel: 'Aggiungi persona', showAdmin: true }), {
         onMount: (el, close) => {

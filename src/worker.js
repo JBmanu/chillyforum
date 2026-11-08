@@ -328,7 +328,7 @@ route('GET', '/api/activity', async ({ env }) => {
   const { results } = await env.DB.prepare(`
     SELECT v.movie_id, v.person_id, v.value, v.note, v.updated_at, p.name, p.email, p.avatar_v, m.title
     FROM votes v JOIN people p ON p.id = v.person_id JOIN movies m ON m.id = v.movie_id
-    ORDER BY v.updated_at DESC LIMIT 15`).all();
+    ORDER BY v.updated_at DESC LIMIT 50`).all();
   return json(results);
 });
 
