@@ -509,3 +509,24 @@ img.fresh { animation: imgIn .25s ease-out; }
 .limitbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 4px 10px; }
 .limitbar .chips { display: flex; align-items: center; gap: 6px; }
 .panel .limitbar { margin: 0 0 8px; }
+
+/* Scegli a caso (a tutto schermo) */
+.draw { border: 0; padding: 0; margin: 0; max-width: none; max-height: none; width: 100%; height: 100%; background: transparent; display: none; place-items: center; color: #fff; }
+.draw[open] { display: grid; animation: fadeIn .2s ease-out; }
+.draw::backdrop { background: radial-gradient(circle at 50% 30%, rgba(40, 70, 200, .92), rgba(8, 14, 40, .96)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.draw-card { position: relative; width: min(92vw, 380px); display: grid; justify-items: center; gap: 12px; text-align: center; padding: 8px 0 20px; }
+.draw-close { position: absolute; top: -4px; right: -4px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.16); color: #fff; font-size: 1.2rem; cursor: pointer; z-index: 2; }
+.draw-kicker { font-weight: 800; letter-spacing: .02em; opacity: .9; margin: 0; }
+.draw-poster { width: min(56vw, 240px); aspect-ratio: 2 / 3; border-radius: var(--radius-m); box-shadow: 0 20px 60px rgba(0,0,0,.5); transition: transform .3s; }
+.draw-poster .poster { height: 100%; }
+.draw-poster.tick { animation: drawTick .12s ease-out; }
+@keyframes drawTick { from { transform: translateY(-14px) scale(.97); opacity: .55; } }
+.draw-card.rolling .draw-poster { filter: saturate(1.2); }
+.draw-card.landed .draw-poster { animation: drawLand .7s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 0 0 4px #ffc93c, 0 24px 70px rgba(0,0,0,.55); }
+@keyframes drawLand { 0% { transform: scale(.8) rotate(-4deg); } 60% { transform: scale(1.08) rotate(2deg); } 100% { transform: scale(1) rotate(0); } }
+.draw-title { font-family: var(--font-display); font-size: 1.7rem; line-height: 1.1; margin: 4px 0 0; min-height: 1.1em; overflow-wrap: anywhere; }
+.draw-meta { margin: 0; opacity: .85; min-height: 1.3em; }
+.draw-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+.draw-actions .btn-ghost { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.08); }
+.draw-actions [aria-disabled='true'] { opacity: .45; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .draw-poster.tick, .draw-card.landed .draw-poster { animation: none; } }

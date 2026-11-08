@@ -3,6 +3,7 @@ import { GENRE_BY_ID } from '../config.js';
 import { api } from '../api.js';
 import { icon } from '../icons.js';
 import { esc, thumb, toast } from '../ui.js';
+import { drawRandom } from '../random.js';
 
 const state = { by: 'all' }; // filtro "Proposto da"
 
@@ -25,7 +26,8 @@ export async function render(main, { me }) {
         ${proposers.map(([id, x]) => `<button class="chip" type="button" data-by="${id}" aria-pressed="${state.by === String(id)}">${esc(id === me.id ? 'Tue' : x.name)} <span class="count">${x.n}</span></button>`).join('')}
       </div>` : ''}
       ${list.length ? `
-        <p class="muted" style="margin:-4px 4px 14px">Tocca 🙋 sui film che vuoi vedere: in cima c'è il più richiesto.</p>
+        <p class="muted" style="margin:-4px 4px 10px">Tocca 🙋 sui film che vuoi vedere: in cima c'è il più richiesto.</p>
+        ${all.length > 1 ? `<button type="button" class="btn btn-ghost" id="rnd" style="margin:0 0 14px">🎲 Scegli a caso</button>` : ''}
         <div class="panel"><ol class="list">${list.map((m, i) => `<li><div class="list-item">
           <a href="#/film/${m.id}" style="display:contents;color:inherit">
             ${thumb(m)}
@@ -42,6 +44,7 @@ export async function render(main, { me }) {
           <p class="muted">Proponi un film per la prossima serata: gli altri potranno dire se lo vogliono vedere.</p></div>`}
       <a class="btn fab" href="#/aggiungi/da-vedere">${icon.plus}Proponi film</a>`;
 
+    main.querySelector('#rnd')?.addEventListener('click', () => drawRandom(all)); // sceglie tra tutti i film da vedere, anche con un filtro attivo
     main.querySelectorAll('[data-by]').forEach((b) => b.addEventListener('click', () => { state.by = b.dataset.by; paint(movies); }));
     main.querySelectorAll('[data-want]').forEach((b) => b.addEventListener('click', async () => {
       const id = Number(b.dataset.want);
