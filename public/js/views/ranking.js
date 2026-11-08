@@ -47,38 +47,76 @@ export async function render(main) {
       </div>
       <p class="faint" style="margin-top:10px;text-align:center">Voti su ${prefs.scale}</p>`;
 
-    main.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.mode = b.dataset.mode; paint(movies); }));
+    main.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => {
+      const d = ORDER.indexOf(b.dataset.mode) - ORDER.indexOf(state.mode);
+      if (!d) return;
+      state.mode = b.dataset.mode; slide = d > 0 ? 'slide-next' : 'slide-prev'; paint(movies); slide = '';
+    }));
     main.querySelectorAll('[data-g]').forEach((b) => b.addEventListener('click', () => { state.genre = b.dataset.g; paint(movies); }));
   };
-  // Scorri a sinistra/destra per passare tra Migliori, Peggiori e Divisivi
+  // Scorri a sinistra/destra per passare tra Migliori, Peggiori e Divisivi.
+  // La lista segue il dito; al rilascio esce da un lato e la nuova entra dall'altro.
+  const canGo = (dir) => { const i = ORDER.indexOf(state.mode) + dir; return i >= 0 && i < ORDER.length; };
+  let busy = false;
   const go = (dir) => {
-    const i = ORDER.indexOf(state.mode) + dir;
-    if (i < 0 || i >= ORDER.length) return;
-    state.mode = ORDER[i];
-    slide = dir > 0 ? 'slide-next' : 'slide-prev';
-    paint(data);
-    slide = '';
-    navigator.vibrate?.(8);
+    if (!canGo(dir) || busy) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const panel = main.querySelector('.panel');
+    const swap = () => {
+      state.mode = ORDER[ORDER.indexOf(state.mode) + dir];
+      slide = reduce ? '' : dir > 0 ? 'slide-next' : 'slide-prev';
+      paint(data); slide = ''; busy = false;
+      navigator.vibrate?.(8);
+    };
+    if (!panel || reduce) return swap();
+    busy = true;
+    panel.style.transition = 'transform .16s ease-in, opacity .16s ease-in';
+    panel.style.transform = `translateX(${dir > 0 ? -45 : 45}%)`;
+    panel.style.opacity = '0';
+    setTimeout(swap, 150);
   };
-  let sx = 0, sy = 0, tracking = false;
+  let sx = 0, sy = 0, tracking = false, locked = false, panel = null;
   const onStart = (e) => {
     const t = e.touches[0];
-    sx = t.clientX; sy = t.clientY;
+    sx = t.clientX; sy = t.clientY; locked = false;
     // niente swipe da: bordo schermo (gesto "indietro"), fila di generi scorrevole, campi
-    tracking = e.touches.length === 1 && sx > 24 && sx < innerWidth - 24
+    tracking = !busy && e.touches.length === 1 && sx > 24 && sx < innerWidth - 24
       && !e.target.closest('.chips.scroll, input, select, textarea, dialog');
+    panel = tracking ? main.querySelector('.panel') : null;
+  };
+  const onMove = (e) => {
+    if (!tracking || !panel) return;
+    const t = e.touches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+    if (!locked) {
+      if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { tracking = false; return; }
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) locked = true; else return;
+    }
+    const k = canGo(dx < 0 ? 1 : -1) ? 1 : 0.2; // ai due estremi la lista "resiste"
+    panel.style.transition = 'none';
+    panel.style.transform = `translateX(${dx * k}px)`;
+    panel.style.opacity = String(1 - Math.min(Math.abs(dx) * k, 240) / 480);
   };
   const onEnd = (e) => {
     if (!tracking) return;
     tracking = false;
     const t = e.changedTouches[0];
     const dx = t.clientX - sx, dy = t.clientY - sy;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    go(dx < 0 ? 1 : -1);
+    const commit = locked && Math.abs(dx) >= 70 && Math.abs(dx) >= Math.abs(dy) * 1.5 && canGo(dx < 0 ? 1 : -1);
+    if (commit) return go(dx < 0 ? 1 : -1);
+    if (locked && panel) { // torna al suo posto con un piccolo rimbalzo
+      panel.style.transition = 'transform .35s cubic-bezier(.34,1.56,.64,1), opacity .2s';
+      panel.style.transform = ''; panel.style.opacity = '';
+    }
   };
+  main.style.touchAction = 'pan-y';
   main.addEventListener('touchstart', onStart, { passive: true });
+  main.addEventListener('touchmove', onMove, { passive: true });
   main.addEventListener('touchend', onEnd, { passive: true });
-  const stop = () => { main.removeEventListener('touchstart', onStart); main.removeEventListener('touchend', onEnd); };
+  main.addEventListener('touchcancel', onEnd, { passive: true });
+  const stop = () => {
+    main.style.touchAction = '';
+    ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach((n, i) => main.removeEventListener(n, [onStart, onMove, onEnd, onEnd][i]));
+  };
 
   const cached = api.peek('/movies');
   if (cached) paint(cached); else main.innerHTML = '<div class="skeleton" style="height:300px;margin-top:12px"></div>';

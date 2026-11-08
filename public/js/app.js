@@ -107,7 +107,19 @@ async function boot() {
     return gate('Impossibile caricare', esc(e.message), `<button class="btn" onclick="location.reload()">Riprova</button>`);
   }
   shell();
-  window.addEventListener('hashchange', () => route());
+  // Indietro: se la pagina precedente è dell'app, usa la cronologia (come il tasto del telefono)
+  let idx = 0;
+  history.replaceState({ idx }, '');
+  window.addEventListener('hashchange', () => {
+    if (history.state?.idx == null) history.replaceState({ idx: ++idx }, '');
+    else idx = history.state.idx;
+    route();
+  });
+  window.addEventListener('popstate', () => { if (history.state?.idx != null) idx = history.state.idx; });
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a.back');
+    if (a && idx > 0 && !e.metaKey && !e.ctrlKey) { e.preventDefault(); history.back(); }
+  });
   route();
 }
 

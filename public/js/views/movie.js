@@ -201,6 +201,13 @@ export async function render(main, { me, params }) {
     try { m = await api.post(`/movies/${id}/votes/${voter}/reactions`, { emoji }); api.set(path, m); $('#votes').innerHTML = votesPanel(m, me); }
     catch (e) { toast(e.message, { error: true }); }
   };
+  const closePickers = () => {
+    main.querySelectorAll('.picker').forEach((p) => p.remove());
+    main.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    document.removeEventListener('pointerdown', outside);
+  };
+  function outside(e) { if (!e.target.closest('.picker, [data-pick]')) closePickers(); }
+  $('#votes').addEventListener('keydown', (e) => { if (e.key === 'Escape') closePickers(); });
   $('#votes').addEventListener('click', (e) => {
     const li = e.target.closest('[data-voter]');
     if (!li) return;
@@ -210,21 +217,24 @@ export async function render(main, { me, params }) {
     const pickBtn = e.target.closest('[data-pick]');
     if (pickBtn) {
       const open = li.querySelector('.picker');
-      main.querySelectorAll('.picker').forEach((p) => p.remove());
-      main.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+      closePickers();
       if (open) return;
       const mine = new Set((m.votes.find((x) => x.person_id === voter)?.reactions || []).filter((r) => r.reactor_id === me.id).map((r) => r.emoji));
       const p = document.createElement('div');
       p.className = 'picker'; p.setAttribute('role', 'group'); p.setAttribute('aria-label', 'Scegli una reazione');
-      p.style.gridColumn = '2 / -1';
       p.innerHTML = REACTIONS.map((r) => `<button type="button" data-react="${r}" aria-pressed="${mine.has(r)}">${r}</button>`).join('');
-      li.append(p);
+      li.append(p); // sta in sovrapposizione (position:absolute): non sposta nulla
+      // sopra al pulsante; se non c'è spazio, sotto
+      const above = pickBtn.getBoundingClientRect().top > p.offsetHeight + 90;
+      if (above) p.style.bottom = `${li.clientHeight - pickBtn.offsetTop + 6}px`;
+      else { p.style.top = `${pickBtn.offsetTop + pickBtn.offsetHeight + 6}px`; p.classList.add('below'); }
       pickBtn.setAttribute('aria-expanded', 'true');
-      p.querySelector('button').focus();
+      p.querySelector('button').focus({ preventScroll: true });
+      setTimeout(() => document.addEventListener('pointerdown', outside), 0);
       return;
     }
     const r = e.target.closest('[data-react]');
-    if (r) { li.querySelector('.picker')?.remove(); react(voter, r.dataset.react); }
+    if (r) { closePickers(); react(voter, r.dataset.react); }
   });
   }
 

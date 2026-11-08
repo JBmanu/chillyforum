@@ -135,15 +135,39 @@ export function mountRater(el, value, onCommit) {
     const t = fromX(e.clientX);
     if (t !== temp) { temp = t; paint(temp); navigator.vibrate?.(4); }
   });
+  // Animazione quando il voto viene confermato: stelle che "saltano" e piccola pioggia di emoji
+  const celebrate = (x) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    track.querySelectorAll('svg.on').forEach((svg, i) => {
+      svg.classList.remove('pop'); void svg.getBoundingClientRect();
+      svg.style.animationDelay = `${i * 40}ms`; svg.classList.add('pop');
+    });
+    out.classList.remove('bump'); void out.offsetWidth; out.classList.add('bump');
+    const row = el.querySelector('.rater-row');
+    const emoji = x >= 8 ? '⭐' : x <= 3 ? '🍅' : '🍿';
+    const count = x >= 8 ? 9 : 6;
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('span');
+      b.className = 'burst'; b.textContent = emoji; b.setAttribute('aria-hidden', 'true');
+      const ang = (-90 + (Math.random() - .5) * 140) * Math.PI / 180, dist = 50 + Math.random() * 50;
+      b.style.setProperty('--dx', `${Math.cos(ang) * dist}px`);
+      b.style.setProperty('--dy', `${Math.sin(ang) * dist}px`);
+      b.style.setProperty('--rot', `${(Math.random() - .5) * 120}deg`);
+      b.style.animationDelay = `${Math.random() * 120}ms`;
+      row.append(b);
+      setTimeout(() => b.remove(), 1000);
+    }
+    navigator.vibrate?.(x >= 8 ? [10, 30, 10] : 10);
+  };
   const end = () => {
     if (!dragging) return;
     dragging = false; track.classList.remove('dragging');
-    if (temp !== v) { v = temp; onCommit(v); }
+    if (temp !== v) { v = temp; onCommit(v); celebrate(v); }
   };
   track.addEventListener('pointerup', end);
   track.addEventListener('pointercancel', () => { dragging = false; track.classList.remove('dragging'); paint(v); });
 
-  zero.addEventListener('click', () => { if (v !== 0) { v = 0; paint(v); onCommit(v); } });
+  zero.addEventListener('click', () => { if (v !== 0) { v = 0; paint(v); onCommit(v); celebrate(0); } });
 
   let kTimer;
   track.addEventListener('keydown', (e) => {
@@ -156,7 +180,7 @@ export function mountRater(el, value, onCommit) {
     else return;
     e.preventDefault();
     v = nv; paint(v);
-    clearTimeout(kTimer); kTimer = setTimeout(() => onCommit(v), 500);
+    clearTimeout(kTimer); kTimer = setTimeout(() => { onCommit(v); celebrate(v); }, 500);
   });
 
   return { set: (x) => { v = x; paint(v); } };
