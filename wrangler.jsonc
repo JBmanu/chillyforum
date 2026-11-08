@@ -28,9 +28,9 @@
 		// Email degli amministratori (separate da virgola): possono gestire le persone.
 		"ADMIN_EMAILS": "buizomanuel@gmail.com",
 		// Cloudflare Access: dominio del team, es. "chilly.cloudflareaccess.com"
-		"ACCESS_TEAM_DOMAIN": "",
+		"ACCESS_TEAM_DOMAIN": "black-surf-2fc8.cloudflareaccess.com",
 		// Cloudflare Access: "Application Audience (AUD) Tag" dell'applicazione
-		"ACCESS_AUD": "",
+		"ACCESS_AUD": "d08d3f496a4ec03547cead3729f2a572f96f41d1367822eb48c35ec0027720c2",
 		// Lingua dei dati dei film presi da TMDB
 		"TMDB_LANGUAGE": "it-IT"
 	}
