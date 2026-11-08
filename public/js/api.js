@@ -4,8 +4,18 @@ export class ApiError extends Error {
 }
 
 const cache = new Map();
+// Scritture in corso: una lettura aspetta che finiscano, così non legge dati vecchi (es. torni indietro subito dopo un voto)
+const pending = new Set();
 
 async function req(method, path, data) {
+  if (method === 'GET' && pending.size) await Promise.allSettled([...pending]);
+  if (method === 'GET') return doReq(method, path, data);
+  const p = doReq(method, path, data);
+  pending.add(p); p.finally(() => pending.delete(p)).catch(() => {});
+  return p;
+}
+
+async function doReq(method, path, data) {
   const headers = { accept: 'application/json' };
   // Solo in sviluppo locale: simula un altro utente (?) — il server lo ignora in produzione
   try { const dev = localStorage.getItem('chilly.devUser'); if (dev) headers['x-dev-user'] = dev; } catch {}

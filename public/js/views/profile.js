@@ -3,6 +3,7 @@ import { APP } from '../config.js';
 import { api } from '../api.js';
 import { icon } from '../icons.js';
 import { esc, avatar, prefs, toast } from '../ui.js';
+import { tastesHTML } from '../stats.js';
 
 export async function render(main, { me, setMe }) {
   const seg = (name, opts, cur) => `<div class="segmented" role="group" aria-label="${name}">
@@ -23,6 +24,7 @@ export async function render(main, { me, setMe }) {
         <span class="faint" style="overflow-wrap:anywhere">${esc(me.email)}</span>
       </form>
     </section>
+    <div id="tastes"></div>
     <section class="panel" style="display:grid;gap:18px">
       <div class="field"><span>Tema</span>${seg('theme', [['light', '☀️ Chiaro'], ['dark', '🌙 Scuro'], ['system', 'Auto']], prefs.theme)}</div>
       <div class="field"><span>Scala dei voti</span>${seg('scale', [[5, '0–5 ★'], [10, '0–10']], prefs.scale)}
@@ -34,6 +36,12 @@ export async function render(main, { me, setMe }) {
     </section>
     <a class="btn btn-ghost btn-block" style="margin-top:20px" href="/cdn-cgi/access/logout">${icon.logout}Esci</a>
     <p class="faint" style="text-align:center;margin-top:16px">${esc(APP.fullName)} 😎<br>Dati dei film da <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. Questo prodotto usa l'API di TMDB ma non è approvato né certificato da TMDB.</p>`;
+
+  // I tuoi gusti (film e genere preferiti): subito dalla memoria, poi aggiornati
+  const tastes = main.querySelector('#tastes');
+  const fillTastes = (p) => { if (p && tastes.isConnected) tastes.innerHTML = tastesHTML(p.votes, { isMe: true }); };
+  fillTastes(api.peek(`/people/${me.id}`));
+  api.get(`/people/${me.id}`, { fresh: true }).then(fillTastes).catch(() => {});
 
   // Foto profilo: ritagliata quadrata, ridotta a 320 px e salvata come JPEG (~25 KB)
   const resize = async (file) => {

@@ -286,9 +286,10 @@ route('GET', '/api/people/:id', async ({ env, params }) => {
   if (!person) fail(404, 'Persona non trovata');
   const { results } = await env.DB.prepare(`
     SELECT m.id, m.title, m.year, m.poster_url, v.value, v.note, v.updated_at,
+      (SELECT group_concat(genre) FROM movie_genres g WHERE g.movie_id = m.id) AS genres,
       (SELECT ROUND(AVG(value), 2) FROM votes WHERE movie_id = m.id) AS avg
     FROM votes v JOIN movies m ON m.id = v.movie_id WHERE v.person_id = ? ORDER BY v.updated_at DESC`).bind(id).all();
-  return json({ ...person, votes: results });
+  return json({ ...person, votes: results.map((r) => ({ ...r, genres: r.genres ? r.genres.split(',') : [] })) });
 });
 
 route('POST', '/api/people', async ({ env, me, request }) => {

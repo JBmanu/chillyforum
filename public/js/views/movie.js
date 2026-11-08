@@ -159,7 +159,21 @@ export async function render(main, { me, params, noRefresh = false }) {
     </div>`;
 
   const $ = (s) => main.querySelector(s);
-  const refreshLists = () => api.invalidate('/movies', '/people', '/activity');
+  const refreshLists = () => api.invalidate('/movies', '/people', '/activity'); // dopo un cambio che tocca le liste
+  const refreshPeople = () => api.invalidate('/people', '/activity');
+  // Dopo un voto aggiorna subito la riga del film nella lista già in memoria: così "Film visti" è corretta
+  // appena torni indietro (poi il server conferma).
+  const syncList = () => {
+    const list = api.peek('/movies');
+    const row = list?.find((x) => x.id === id);
+    if (!row) return;
+    const n = m.votes.length;
+    Object.assign(row, {
+      avg: m.avg, avg_sq: n ? m.votes.reduce((s, v) => s + v.value * v.value, 0) / n : null,
+      votes: n, my_vote: m.my_vote ? m.my_vote.value : null,
+    });
+    api.set('/movies', list);
+  };
   const rerender = () => render(main, { me, params, noRefresh: true });
   if (refreshing) {
     const shown = JSON.stringify(m);
@@ -170,12 +184,12 @@ export async function render(main, { me, params, noRefresh = false }) {
   }
   const setWatched = async (date) => {
     m = await api.put(`/movies/${id}/watched`, { watched_on: date });
-    api.set(path, m); refreshLists();
+    refreshLists(); api.set(path, m);
   };
 
   if (!m.watched_on) {
     $('#want').addEventListener('click', async () => {
-      try { m = await api.post(`/movies/${id}/interest`); api.set(path, m); refreshLists(); rerender(); }
+      try { m = await api.post(`/movies/${id}/interest`); refreshLists(); api.set(path, m); rerender(); }
       catch (e) { toast(e.message, { error: true }); }
     });
     $('#markWatched').addEventListener('click', async () => {
@@ -203,7 +217,7 @@ export async function render(main, { me, params, noRefresh = false }) {
     saveState.textContent = 'Salvo…';
     try {
       m = await api.put(`/movies/${id}/vote`, { value, note: noteText });
-      api.set(path, m); refreshLists(); paintGroup();
+      api.set(path, m); refreshPeople(); syncList(); paintGroup();
       saveState.textContent = '✓ Salvato';
       setTimeout(() => (saveState.textContent = ''), 2000);
     } catch (e) { saveState.textContent = ''; toast(e.message, { error: true }); }
@@ -221,7 +235,7 @@ export async function render(main, { me, params, noRefresh = false }) {
   removeBtn.addEventListener('click', async () => {
     const prev = m.my_vote;
     m = await api.del(`/movies/${id}/vote`);
-    api.set(path, m); refreshLists(); rater.set(null); paintGroup();
+    api.set(path, m); refreshPeople(); syncList(); rater.set(null); paintGroup();
     toast('Voto tolto', { action: 'Annulla', onAction: () => { rater.set(prev.value); save(prev.value, prev.note); } });
   });
 

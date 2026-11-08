@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { icon } from '../icons.js';
 import { esc, avatar, fmtAvg, fmtVote, thumb, toast, sheet, confirmSheet, prefs } from '../ui.js';
 import { personForm, bindPersonForm } from './people.js';
+import { tastesHTML } from '../stats.js';
 
 export async function render(main, { me, params, setMe }) {
   const id = Number(params.id);
@@ -27,6 +28,7 @@ export async function render(main, { me, params, setMe }) {
         ${mood ? `<p class="muted">${mood}</p>` : ''}
       </div>
     </section>
+    ${tastesHTML(p.votes, { isMe })}
     <section class="panel">
       <div class="panel-head"><h2>Voti dati</h2><span class="faint">suo voto / media</span></div>
       ${p.votes.length ? `<ul class="list">${p.votes.map((v) => `<li><a class="list-item" href="#/film/${v.id}">${thumb(v)}
