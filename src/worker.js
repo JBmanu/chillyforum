@@ -51,6 +51,7 @@ const cleanEmail = (v) => {
 async function listMovies(env, me) {
   const { results } = await env.DB.prepare(`
     SELECT m.id, m.title, m.year, m.poster_url, m.created_at, m.added_by, m.watched_on, m.director,
+      (SELECT name FROM people WHERE id = m.added_by) AS added_by_name,
       (SELECT COUNT(*) FROM interests i WHERE i.movie_id = m.id) AS interest,
       EXISTS (SELECT 1 FROM interests i WHERE i.movie_id = m.id AND i.person_id = ?1) AS my_interest,
       (SELECT group_concat(genre) FROM movie_genres g WHERE g.movie_id = m.id) AS genres,
@@ -289,7 +290,14 @@ route('GET', '/api/people/:id', async ({ env, params }) => {
       (SELECT group_concat(genre) FROM movie_genres g WHERE g.movie_id = m.id) AS genres,
       (SELECT ROUND(AVG(value), 2) FROM votes WHERE movie_id = m.id) AS avg
     FROM votes v JOIN movies m ON m.id = v.movie_id WHERE v.person_id = ? ORDER BY v.updated_at DESC`).bind(id).all();
-  return json({ ...person, votes: results.map((r) => ({ ...r, genres: r.genres ? r.genres.split(',') : [] })) });
+  // Film proposti (aggiunti) da questa persona, ancora da vedere o già visti
+  const { results: proposed } = await env.DB.prepare(`
+    SELECT m.id, m.title, m.year, m.poster_url, m.watched_on, m.created_at,
+      (SELECT COUNT(*) FROM interests i WHERE i.movie_id = m.id) AS interest,
+      (SELECT ROUND(AVG(value), 2) FROM votes WHERE movie_id = m.id) AS avg,
+      (SELECT COUNT(*) FROM votes WHERE movie_id = m.id) AS votes
+    FROM movies m WHERE m.added_by = ? ORDER BY COALESCE(m.watched_on, m.created_at) DESC, m.id DESC`).bind(id).all();
+  return json({ ...person, proposed, votes: results.map((r) => ({ ...r, genres: r.genres ? r.genres.split(',') : [] })) });
 });
 
 route('POST', '/api/people', async ({ env, me, request }) => {

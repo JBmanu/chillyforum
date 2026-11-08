@@ -1,9 +1,11 @@
 // Pagina della singola persona: i suoi voti (confrontati con la media) + gestione per admin
 import { api } from '../api.js';
 import { icon } from '../icons.js';
-import { esc, avatar, fmtAvg, fmtVote, thumb, toast, sheet, confirmSheet, prefs } from '../ui.js';
+import { esc, avatar, fmtAvg, fmtVote, fmtDate, thumb, toast, sheet, confirmSheet, prefs, capped, limitBar, bindLimitBar } from '../ui.js';
 import { personForm, bindPersonForm } from './people.js';
 import { tastesHTML } from '../stats.js';
+
+const tabState = { person: null, tab: null }; // scheda scelta (Da vedere / Visti)
 
 export async function render(main, { me, params, setMe }) {
   const id = Number(params.id);
@@ -16,6 +18,27 @@ export async function render(main, { me, params, setMe }) {
   const diff = p.votes.length ? p.votes.reduce((s, v) => s + (v.value - v.avg), 0) / p.votes.length : 0;
   const mood = !p.votes.length ? '' : diff > 0.6 ? '😇 Più generoso del gruppo' : diff < -0.6 ? '🧐 Più severo del gruppo' : '😎 In linea con il gruppo';
   const isMe = p.id === me.id;
+  const toSee = p.proposed.filter((m) => !m.watched_on), seen = p.proposed.filter((m) => m.watched_on);
+  if (tabState.person !== p.id) { tabState.person = p.id; tabState.tab = toSee.length || !seen.length ? 'todo' : 'seen'; }
+  const proposalsHTML = () => {
+    const rows = tabState.tab === 'todo' ? toSee : seen;
+    return `<section class="panel" aria-labelledby="h-prop">
+      <div class="panel-head"><h2 id="h-prop">${isMe ? 'I film che hai proposto' : 'Film proposti'}</h2></div>
+      <div class="segmented" role="group" aria-label="Stato dei film proposti">
+        <button type="button" data-tab="todo" aria-pressed="${tabState.tab === 'todo'}">Da vedere (${toSee.length})</button>
+        <button type="button" data-tab="seen" aria-pressed="${tabState.tab === 'seen'}">Già visti (${seen.length})</button>
+      </div>
+      <div style="margin-top:10px">${limitBar('proposals', rows.length)}
+      ${rows.length ? `<ul class="list">${capped(rows, 'proposals').map((m) => `<li><a class="list-item" href="#/film/${m.id}">${thumb(m)}
+        <span class="grow"><span class="name">${esc(m.title)}</span>
+          <span class="meta">${[m.year, m.watched_on && `visto il ${fmtDate(m.watched_on)}`].filter(Boolean).join(', ')}</span></span>
+        ${m.watched_on
+          ? (m.avg != null ? `<span class="logo-type" style="font-size:1.5rem">${fmtAvg(m.avg)}</span>` : '<span class="faint">nessun voto</span>')
+          : `<span class="faint" aria-label="${m.interest} ${m.interest === 1 ? 'persona lo vuole' : 'persone lo vogliono'} vedere">🙋 ${m.interest}</span>`}
+      </a></li>`).join('')}</ul>`
+      : `<p class="muted">${tabState.tab === 'todo' ? 'Nessun film in attesa di essere visto.' : 'Nessun film proposto è stato ancora visto.'}</p>`}</div>
+    </section>`;
+  };
 
   main.innerHTML = `
     <div class="page-head" style="justify-content:flex-start;gap:4px"><a class="iconbtn back" href="#/persone" aria-label="Torna alle persone">${icon.back}</a></div>
@@ -29,6 +52,7 @@ export async function render(main, { me, params, setMe }) {
       </div>
     </section>
     ${tastesHTML(p.votes, { isMe })}
+    <div id="proposals">${p.proposed.length ? proposalsHTML() : ''}</div>
     <section class="panel">
       <div class="panel-head"><h2>Voti dati</h2><span class="faint">suo voto / media</span></div>
       ${p.votes.length ? `<ul class="list">${p.votes.map((v) => `<li><a class="list-item" href="#/film/${v.id}">${thumb(v)}
@@ -41,6 +65,14 @@ export async function render(main, { me, params, setMe }) {
     ${me.is_admin ? `<div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
       <button class="btn btn-ghost" id="editP">${icon.edit}Modifica</button>
       ${!isMe ? `<button class="btn btn-ghost" id="delP" style="color:var(--tomato)">${icon.trash}Rimuovi dal gruppo</button>` : ''}</div>` : ''}`;
+
+  const paintProposals = () => {
+    const box = main.querySelector('#proposals');
+    box.innerHTML = proposalsHTML();
+    box.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { tabState.tab = b.dataset.tab; paintProposals(); }));
+    bindLimitBar(box, 'proposals', paintProposals);
+  };
+  if (p.proposed.length) paintProposals();
 
   main.querySelector('#editP')?.addEventListener('click', () => {
     sheet('Modifica persona', personForm(p, { submitLabel: 'Salva modifiche', showAdmin: !isMe }), {
