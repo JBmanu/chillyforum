@@ -385,3 +385,21 @@ dialog.sheet::backdrop { background: var(--scrim); }
 .scale-toggle span { white-space: nowrap; min-width: 40px; padding: 0 8px; }
 @media (max-width: 400px) { .brand .sunnies { display: none; } }
 @media (min-width: 600px) { .brand .logo-type { font-size: 1.75rem; } }
+
+/* Campo data: su iPhone ha una larghezza propria e sbordava dal modulo */
+input[type='date'] {
+  -webkit-appearance: none; appearance: none;
+  display: block; width: 100%; max-width: 100%; min-width: 0;
+  text-align: left; line-height: 1.2;
+}
+input[type='date']::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
+.field, .form > *, .row2 > *, .watch-actions > * { min-width: 0; }
+.watch-actions { grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 400px) {
+  .watch-actions { grid-template-columns: minmax(0, 1fr); }
+  .watch-actions .btn { width: 100%; }
+}
+@media (max-width: 350px) {
+  .brand img { display: none; }
+  .brand .logo-type { font-size: 1.3rem; }
+}
