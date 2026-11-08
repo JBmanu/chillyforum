@@ -403,3 +403,20 @@ input[type='date']::-webkit-date-and-time-value { text-align: left; min-height: 
   .brand img { display: none; }
   .brand .logo-type { font-size: 1.3rem; }
 }
+
+/* "Visto": il pulsante sta sempre sotto la data; affiancato solo su schermi larghi */
+.watch-actions { grid-template-columns: minmax(0, 1fr); }
+.watch-actions .btn { width: 100%; }
+@media (min-width: 640px) {
+  .watch-actions { grid-template-columns: minmax(0, 1fr) auto; }
+  .watch-actions .btn { width: auto; }
+}
+
+/* Classifica: scorrimento tra le schede */
+.slide-next { animation: slideNext .22s ease-out; }
+.slide-prev { animation: slidePrev .22s ease-out; }
+@keyframes slideNext { from { transform: translateX(28px); opacity: 0; } }
+@keyframes slidePrev { from { transform: translateX(-28px); opacity: 0; } }
+
+/* Lo scorrimento laterale non deve far "tornare indietro" il browser (serve alla classifica) */
+html, body { overscroll-behavior-x: none; }

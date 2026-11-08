@@ -85,7 +85,7 @@ npm run deploy                          # pubblica: ti dà l'indirizzo …worker
 1. Dashboard Cloudflare → **Zero Trust**. La prima volta scegli un nome del team (es. `chilly`) e il piano **Free**.
 2. **Access → Applications → Add an application → Self-hosted**.
    - Domain: l'indirizzo del punto 2 (es. `chillyforum.tuonome.workers.dev`).
-   - Login methods: **One-time PIN** (è quello del codice via email).
+   - Login methods: **One-time PIN** (è quello del codice via email). Controlla che sia l'unico metodo attivo: se c'è il login di Cloudflare, gli amici vedono "sign-in is restricted to members of the account".
 3. Policy: **Action = Allow**, **Include = Everyone**.
    Chiunque può ricevere un codice, ma l'app fa entrare solo le email presenti nella pagina Persone: così per aggiungere un amico basta farlo dall'app, senza toccare Cloudflare.
    (Se preferisci un doppio filtro, usa **Include = Emails** e aggiungi lì ogni email: dovrai però ricordarti di farlo a ogni nuova persona.)
@@ -102,6 +102,12 @@ Entra, vai su **Persone → Aggiungi**, metti nome ed email. Mandagli il link: i
 
 ### Aggiornamenti futuri
 Modifichi i file → `npm run deploy`. Se aggiungi una tabella o colonna, crea un nuovo file in `migrations/` (es. `0002_….sql`) e lancia `npm run db:migrate`.
+
+### Problemi comuni
+- **"Non sei ancora nel gruppo":** l'email con cui la persona entra non è quella salvata in Persone. Confrontale (con Gmail, punti e `+alias` contano).
+- **Cloudflare dice "sign-in is restricted to members of the account":** nell'applicazione Access del Worker (Zero Trust → Access → Applications → Edit → Login methods) usa solo **One-time PIN**.
+- **Il codice non arriva:** controlla lo spam.
+- **Sito vuoto dopo un aggiornamento con nuove tabelle:** lancia `npm run db:migrate`, poi fai il push.
 
 ---
 
