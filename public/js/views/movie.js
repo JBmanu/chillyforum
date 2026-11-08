@@ -97,12 +97,15 @@ function votesPanel(m, me) {
   </section>`;
 }
 
-export async function render(main, { me, params }) {
+export async function render(main, { me, params, noRefresh = false }) {
   const id = Number(params.id);
   const path = `/movies/${id}`;
   let m = api.peek(path);
-  if (!m) main.innerHTML = '<div class="skeleton" style="height:220px;margin-top:12px"></div><div class="skeleton" style="height:120px;margin-top:16px"></div>';
-  try { m = await api.get(path, { fresh: true }); } catch (e) {
+  // Se il film è già in memoria lo mostriamo subito e lo aggiorniamo in background (niente attesa, niente salto)
+  let refreshing = null;
+  if (m) { if (!noRefresh) refreshing = api.get(path, { fresh: true }).catch(() => null); }
+  else main.innerHTML = '<div class="skeleton" style="height:220px;margin-top:12px"></div><div class="skeleton" style="height:120px;margin-top:16px"></div>';
+  try { if (!m) m = await api.get(path, { fresh: true }); } catch (e) {
     if (e.status === 404) {
       main.innerHTML = `<div class="empty"><div class="big">🎬</div><h2>Film non trovato</h2><p class="muted">Forse è stato eliminato.</p><a class="btn" href="#/">Torna ai film</a></div>`;
       return;
@@ -157,7 +160,14 @@ export async function render(main, { me, params }) {
 
   const $ = (s) => main.querySelector(s);
   const refreshLists = () => api.invalidate('/movies', '/people', '/activity');
-  const rerender = () => render(main, { me, params });
+  const rerender = () => render(main, { me, params, noRefresh: true });
+  if (refreshing) {
+    const shown = JSON.stringify(m);
+    refreshing.then((f) => {
+      const typing = main.contains(document.activeElement) && document.activeElement.matches('textarea, input');
+      if (f && JSON.stringify(f) !== shown && location.hash === `#/film/${id}` && !typing) rerender();
+    });
+  }
   const setWatched = async (date) => {
     m = await api.put(`/movies/${id}/watched`, { watched_on: date });
     api.set(path, m); refreshLists();

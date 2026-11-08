@@ -485,3 +485,9 @@ a .avatar[data-photo], button .avatar[data-photo] { cursor: inherit; }
 .composer .send { width: 46px; height: 46px; padding: 0; border-radius: 50%; flex: none; }
 .composer .send svg { width: 22px; height: 22px; }
 @media (min-width: 900px) { .composer { bottom: 12px; } }
+
+/* Le immagini nuove compaiono con una dissolvenza; quelle già viste restano ferme (niente lampeggio) */
+img.fresh { animation: imgIn .25s ease-out; }
+@keyframes imgIn { from { opacity: 0; } }
+.hero-bg { animation: heroIn .35s ease-out; }
+@keyframes heroIn { from { opacity: 0; } }

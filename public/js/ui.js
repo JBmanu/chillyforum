@@ -66,18 +66,25 @@ export const avatar = (p, cls = '') => {
   // L'oggetto può essere una persona, un voto (person_id) o una reazione (reactor_id)
   const id = p.person_id ?? p.reactor_id ?? p.id;
   const v = p.reactor_av ?? p.avatar_v;
-  const photo = v && id ? `<img src="/api/people/${id}/avatar?v=${v}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : '';
+  const src = `/api/people/${id}/avatar?v=${v}`;
+  const photo = v && id ? `<img src="${src}" alt="" ${imgAttrs(src)} onerror="this.remove()">` : '';
   return `<span class="avatar ${cls}"${photo ? ` data-photo="/api/people/${id}/avatar?v=${v}" data-who="${esc(p.name ?? p.reactor_name)}"` : ''} style="background:${AVATAR_COLORS[hash(p.email || p.name || p.reactor_email) % AVATAR_COLORS.length]}" aria-hidden="true">${esc(initials(p.name ?? p.reactor_name))}${photo}</span>`;
 };
 
+/* Immagini già viste: al cambio pagina i tag <img> vengono ricreati. Se l'immagine è già stata caricata
+   la mostriamo subito (decodifica sincrona, niente lazy) e senza dissolvenza, così non c'è nessun lampeggio. */
+const seenImgs = new Set();
+document.addEventListener('load', (e) => { if (e.target.tagName === 'IMG') seenImgs.add(e.target.getAttribute('src')); }, true);
+const imgAttrs = (src) => (seenImgs.has(src) ? 'loading="eager" decoding="sync"' : 'loading="lazy" decoding="async" class="fresh"');
+
 export function poster(m, extra = '') {
   const img = m.poster_url
-    ? `<img src="${esc(m.poster_url)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+    ? `<img src="${esc(m.poster_url)}" alt="" ${imgAttrs(m.poster_url)} onerror="this.remove()">`
     : '';
   return `<div class="poster">${img ? '' : `<div class="ph">${esc(m.title)}</div>`}${img}${extra}</div>`;
 }
 export const thumb = (m) =>
-  `<span class="thumb">${m.poster_url || m.poster_thumb ? `<img src="${esc(m.poster_url || m.poster_thumb)}" alt="" loading="lazy" onerror="this.remove()">` : ''}</span>`;
+  `<span class="thumb">${m.poster_url || m.poster_thumb ? `<img src="${esc(m.poster_url || m.poster_thumb)}" alt="" ${imgAttrs(m.poster_url || m.poster_thumb)} onerror="this.remove()">` : ''}</span>`;
 
 /* ---------- Toast ---------- */
 export function toast(msg, { error = false, action, onAction, ms = 3200 } = {}) {
