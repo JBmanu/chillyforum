@@ -5,12 +5,14 @@ import { esc, thumb, toast, poster } from '../ui.js';
 import { movieForm, bindMovieForm } from './parts.js';
 
 export async function render(main, { me, params }) {
-  const mode = params.mode === 'da-vedere' ? 'watchlist' : 'watched';
-  const label = mode === 'watched' ? 'Aggiungi film' : 'Aggiungi ai da vedere';
+  // Un solo punto di ingresso: il film nasce "da vedere" (come una proposta). Chi vuole aggiungere un film
+  // già visto sceglie "Sì, già visto" nel modulo. (Il vecchio indirizzo #/aggiungi/da-vedere funziona ancora.)
+  const mode = 'watchlist';
+  const label = 'Aggiungi ai da vedere';
   // I doppioni sono gestiti dal server (risponde 409 con l'id del film già presente)
   main.innerHTML = `
     <div class="page-head" style="justify-content:flex-start;gap:4px">
-      <a class="iconbtn back" href="${mode === 'watched' ? '#/' : '#/da-vedere'}" aria-label="Indietro">${icon.back}</a><h1>${mode === 'watched' ? 'Aggiungi film' : 'Proponi un film'}</h1></div>
+      <a class="iconbtn back" href="#/" aria-label="Indietro">${icon.back}</a><h1>Aggiungi film</h1></div>
     <div id="step"></div>`;
   const step = main.querySelector('#step');
 
@@ -18,7 +20,7 @@ export async function render(main, { me, params }) {
     try {
       const { id } = await api.post('/movies', data);
       api.invalidate('/movies');
-      toast(data.watched_on ? 'Film aggiunto. Ora dai il tuo voto!' : 'Aggiunto ai film da vedere');
+      toast(data.watched_on ? 'Aggiunto ai film visti. Ora dai il tuo voto!' : 'Aggiunto ai film da vedere');
       location.hash = `#/film/${id}`;
     } catch (e) {
       if (e.status === 409 && e.data?.id) {

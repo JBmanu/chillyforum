@@ -41,8 +41,8 @@ export async function render(main, { me }) {
         </div></li>`).join('')}</ol></div>`
       : state.by !== 'all' ? `<div class="empty"><div class="big">📌</div><h2>Nessuna proposta</h2><p class="muted">Questa persona non ha film in attesa.</p></div>`
       : `<div class="empty"><div class="big">📌</div><h2>Nessun film da vedere</h2>
-          <p class="muted">Proponi un film per la prossima serata: gli altri potranno dire se lo vogliono vedere.</p></div>`}
-      <a class="btn fab" href="#/aggiungi/da-vedere">${icon.plus}Proponi film</a>`;
+          <p class="muted">Aggiungi un film per la prossima serata: gli altri potranno dire se lo vogliono vedere.</p></div>`}
+      <a class="btn fab" href="#/aggiungi">${icon.plus}Aggiungi film</a>`;
 
     main.querySelector('#rnd')?.addEventListener('click', () => drawRandom(all)); // sceglie tra tutti i film da vedere, anche con un filtro attivo
     main.querySelectorAll('[data-by]').forEach((b) => b.addEventListener('click', () => { state.by = b.dataset.by; paint(movies); }));

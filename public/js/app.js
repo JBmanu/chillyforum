@@ -18,7 +18,7 @@ const ROUTES = [
   { re: /^\/film\/(\d+)$/, view: movie, nav: 'film', title: 'Film', keys: ['id'] },
   { re: /^\/film\/(\d+)\/discussione$/, view: discussion, nav: 'film', title: 'Discussione', keys: ['id'] },
   { re: /^\/aggiungi$/, view: add, nav: 'film', title: 'Aggiungi film' },
-  { re: /^\/aggiungi\/(da-vedere)$/, view: add, nav: 'davedere', title: 'Proponi un film', keys: ['mode'] },
+  { re: /^\/aggiungi\/(da-vedere)$/, view: add, nav: 'davedere', title: 'Aggiungi film', keys: ['mode'] },
   { re: /^\/da-vedere$/, view: watchlist, nav: 'davedere', title: 'Da vedere' },
   { re: /^\/classifica$/, view: ranking, nav: 'classifica', title: 'Classifica' },
   { re: /^\/persone$/, view: people, nav: 'persone', title: 'Persone' },

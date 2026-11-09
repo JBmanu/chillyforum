@@ -13,8 +13,8 @@ export function movieForm(m = {}, { submitLabel = 'Salva', compact = false, stat
   return `<form class="form" id="movieForm" novalidate>
     ${status ? `<div class="field"><span id="slabel">Lo avete già visto?</span>
       <div class="segmented" role="group" aria-labelledby="slabel">
-        <button type="button" data-status="watched" aria-pressed="${status === 'watched'}">🎬 Già visto</button>
-        <button type="button" data-status="watchlist" aria-pressed="${status === 'watchlist'}">📌 Da vedere</button>
+        <button type="button" data-status="watchlist" aria-pressed="${status === 'watchlist'}">📌 Non ancora</button>
+        <button type="button" data-status="watched" aria-pressed="${status === 'watched'}">🎬 Sì, già visto</button>
       </div></div>${dateField(status === 'watched')}` : ''}
     ${dateOnly ? dateField(true) : ''}
     <label class="field"><span>Titolo *</span>
@@ -49,7 +49,7 @@ export function bindMovieForm(form, onSubmit) {
     form.querySelectorAll('[data-status]').forEach((x) => x.setAttribute('aria-pressed', x === b));
     form.querySelector('[data-datefield]').hidden = b.dataset.status !== 'watched';
     [...form.querySelectorAll('[type=submit]'), ...document.querySelectorAll(`[type=submit][form="${form.id}"]`)]
-      .forEach((x) => (x.textContent = b.dataset.status === 'watched' ? 'Aggiungi film' : 'Aggiungi ai da vedere'));
+      .forEach((x) => (x.textContent = b.dataset.status === 'watched' ? 'Aggiungi ai film visti' : 'Aggiungi ai da vedere'));
   }));
   const err = form.querySelector('[data-error]');
   form.addEventListener('submit', async (e) => {

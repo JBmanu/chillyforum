@@ -76,7 +76,7 @@ export async function render(main) {
       count.textContent = rows.length === movies.length ? '' : `${rows.length} risultati`;
       if (!movies.length) {
         list.innerHTML = `<div class="empty"><div class="big">🍿</div><h2>Ancora nessun film</h2>
-          <p class="muted">Aggiungi il primo film che avete visto insieme${proposals ? `, oppure guarda i <a href="#/da-vedere">${proposals} da vedere</a>` : ''}.</p><a class="btn" href="#/aggiungi">${icon.plus}Aggiungi film</a></div>`;
+          <p class="muted">${proposals ? `Quando ne guardate uno, aprilo tra i <a href="#/da-vedere">${proposals} da vedere</a> e segnalo come visto.` : 'Aggiungi il primo film: se lo avete già visto, scegli “Sì, già visto”.'}</p><a class="btn" href="#/aggiungi">${icon.plus}Aggiungi film</a></div>`;
       } else if (!rows.length) {
         list.innerHTML = state.filter === 'todo' && !q
           ? `<div class="empty"><div class="big">😎</div><h2>Hai votato tutto</h2><p class="muted">Sei in pari con il gruppo.</p></div>`
