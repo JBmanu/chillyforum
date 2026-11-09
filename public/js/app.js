@@ -43,7 +43,7 @@ function shell() {
   <div class="shell">
     <header class="topbar">
       <a class="brand" href="#/" aria-label="${esc(APP.fullName)}, vai ai film">
-        <img src="/img/chilly.jpg" alt="" width="38" height="38">
+        <img src="/img/logo-header.png" alt="" width="38" height="38">
         <span class="logo-type" aria-hidden="true">${esc(APP.name)}</span><span class="sunnies" aria-hidden="true">😎</span>
       </a>
       <button class="scale-toggle" id="scaleToggle" type="button"></button>
